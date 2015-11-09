@@ -27,6 +27,10 @@ img{
 	display: inline-block;
 }
 
+#hearticon:hover{
+	color: green;
+}
+
 #searchBox{
 	width: 300px;
 }
