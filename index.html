@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<!-- Set meta properties -->
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>EvTrackz</title>
+		
+		<!-- Styles -->
+		<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+
+		<!-- Angular -->
+		<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.15/angular.min.js"></script>
+
+		<!-- Firebase -->
+		<script src="https://cdn.firebase.com/js/client/2.2.4/firebase.js"></script>
+
+		<!-- AngularFire -->
+		<script src="https://cdn.firebase.com/libs/angularfire/1.1.3/angularfire.min.js"></script>
+		
+		<!-- Scripts -->
+		<link href="main.css" rel="stylesheet" type="text/css" />
+		<script type="text/javascript" src="main.js"></script>
+		<script src="https://code.jquery.com/jquery.min.js"></script>
+	</head>
+
+	<!-- Initiate app and controller on body -->
+	<body ng-app="myApp" ng-controller="myCtrl">
+
+		<!-- Header with logout button -->
+		<header>
+			<div class="log-out" ng-show="userId">
+			</div>
+		</header>	
+
+		<nav class="navbar navbar-default" id="navbar" ng-show="userId">
+		    <div ng-show="userId" class="container-fluid" align="center">
+		        <!-- Header for mobile -->
+		        <div class="navbar-header">
+		            <ul>
+		            	<span>
+						    <a href ng-click="showSongs = !showSongs">Switch Back</a>
+							<input id="searchBox" name="search" placeholder="Search for a song..." ng-model="track"></input>
+							<button ng-disabled="songForm.search.$invalid" class="btn btn-primary" href ng-click="showSongs = true; getSongs()" type="submit">Search</button>
+						</span>
+					</ul>
+
+					<ul id="username">
+						<span>Signed in as {{users[userId].handle}}</span>
+						<img class="image" ng-src="{{users[userId].userImage}}"></img>
+						<button ng-click="logOut()" class="btn btn-warning">Logout</button>
+					</ul>
+				</div>     
+		        <!-- Screen navigation elements -->
+	        	<div id="navbar" class="navbar-collapse collapse">
+	        </div>
+		</nav>
+
+		<div ng-show="!userId" class="container-fluid" id="createAccount">
+				<center><img id="logo" src="mainlogo.jpg"/></center>
+				<h4>Sign up and see what your friends are listening to!</h4>
+		</div>
+
+		<div ng-show="userId" class="container-fluid" id="evtrackzHead">
+				<h1 id="heading">EvTrackz</h1>
+		</div>
+
+		<!-- Element for writing tweets -->
+		<div id="tweetdisplay" ng-show="userId">
+			<!-- Show image of current user -->
+			<img class="image" ng-src="{{users[userId].userImage}}"></img>
+
+			<!-- Form for writing tweets -->
+			<form name="tweet-input" id="tweet-input">
+
+				<!-- Bind model newTweet to a textarea element.
+					set a maximum length of 140 characters -->					
+				<textarea placeholder="Whats up?" ng-model="newTweet" name="text" class="form-control" requred ng-maxlength="140"></textarea>
+				
+				<!-- Tweet button -->
+				<div class="form-group send-tweet">
+
+					<!-- Execute the tweet function when clicked -->
+					<button ng-click="tweet()" ng-disabled="tweet-input.$invalid" type="submit" class="btn btn-primary">
+						share!
+					</button> 					
+				</div>
+			</form>
+		</div>
+
+
+
+		<div class="container">
+			<!-- Sign-in/sign-up form: show if userId isn't defined -->
+			<form name="myForm" ng-show="!userId" novalidate>
+				<br>
+				<!-- Bind model "handle" to this input, set minimum length, and make it required -->
+				<div class="form-group">
+					<label>Username:</label>
+					<input ng-model="handle" ng-minlength="5" name="handle" class="form-control">	
+					
+					<!-- Add an error message if the length is too short -->	
+					<p class="help-block" ng-show="myForm.handle.$error.minlength">Too short!</p>
+					
+				</div>	
+
+				<!-- Input for image URL -->
+				<div class="form-group">
+					<label>Profile picture(Enter Image URL):</label>
+					<img ng-src="{{userImage}}">							
+					<input name="img" class="form-control" ng-model="userImage">
+				</div>
+
+				<!-- Bind model "email" to this input and make it required -->
+				<div class="form-group">
+					<label>Email:</label>
+					<input value="" ng-model="email" type="email" class="form-control"></input>
+
+					<!-- Show an error message if the email is not valid -->	
+					<p class="help-block" ng-show="myForm.email.$error.email">Not an email!</p>
+				</div>
+
+				<!-- Password -->
+				<div class="form-group">
+					<label>Password:</label>
+					<input value="" type="password" class="form-control" ng-model="password" required></input>      
+				</div>
+
+				<!-- Submit buttons: should only be active if certain inputs are valid -->
+				<div class="form-group">
+					<button ng-click="signUp()" ng-disabled="myForm.$invalid" type="submit" class="btn btn-primary">Sign-up</button> 
+					<button ng-click="signIn()" ng-disabled="myForm.email.$invalid || myForm.password.$invalid" type="submit" class="btn btn-primary">Sign-in</button>
+				</div>
+			</form>
+
+		<!-- Search for music -->
+		<div ng-app="myApp" ng-controller="myCtrl" ng-show="userId && showSongs">
+			<!-- Results -->
+			<br>
+			<div id="songDiv" class="container-fixed">
+				<div class="help-block">
+					<span ng-show="tracks.length>0"><h3>Click to listen</h3></span>
+					<span ng-show="currentSong && !audioObject.paused">(playing)</span>
+				</div>
+				<ul id="songList">
+					<li ng-repeat="track in tracks" class="" ng-click="play(track.preview_url, track)" title="{{track.name}}">{{track.name + ', by ' + track.artists[0].name}}</li>
+				</ul>			
+			</div>
+		</div>
+
+
+
+			<!-- Show tweets (if userId is defined) -->
+			<div ng-show="userId && !showSongs">
+				<!-- Use ng-repeat directive to repeat a div for each element in tweets -->
+				<div id="boxBorder" class="well well-sm" ng-repeat="tweet in tweets | orderBy : '-likes'">
+					<div>
+						<!-- Put an img tag that shows the userImage of that tweet -->
+						<img class="image" ng-src="{{users[tweet.userId].userImage}}"></img>
+						<!-- Put in the twitter handle and time of tweet -->
+						<span class="handle">{{users[tweet.userId].handle}}</span>
+						<span class="time">on {{tweet.time | date}}</span>
+					</div>
+
+					<!-- Put in the text of the tweet -->
+					<div class="tweet">
+						<span>I'm listening to {{tweet.song}}</span>
+						<span> by {{tweet.artist}}!</span><br>
+						{{tweet.text}}
+					</div>
+
+					<!-- Create a section for showing tweet likes -->
+					<div class="likes">
+						
+						<!-- Show a heart icon that, when clicked, 
+							passes your tweet to your "like" function -->
+						<i id="hearticon" ng-click="like(tweet)" class="fa fa-heart"></i>
+						
+						<!-- Show your total number of likes -->
+						<span>{{tweet.likes}}</span>
+					</div>
+				</div>
+			</div>
+	</body>
+</html>
